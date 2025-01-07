@@ -2,12 +2,12 @@
   "name": "simple-markdown-blog",
   "version": "1.0.0",
   "description": "A simple static website with Markdown blog support",
-  "main": "build.js",
+  "main": "src/server/build.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "./node_modules/.bin/nodemon server.js",
-    "build": "node build.js",
-    "watch": "./node_modules/.bin/nodemon --watch posts --watch templates --ext md,html,css,js --exec 'npm run build'"
+    "start": "node src/server/server.js",
+    "dev": "./node_modules/.bin/nodemon src/server/server.js",
+    "build": "node src/server/build.js",
+    "watch": "./node_modules/.bin/nodemon --watch src/content --watch src/templates --ext md,html,css,js --exec 'npm run build'"
   },
   "dependencies": {
     "express": "^4.18.2",

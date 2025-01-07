@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog Posts - My Blog</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>{{title}} - My Blog</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <header>
@@ -14,26 +14,19 @@
                 <ul class="nav-links">
                     <li><a href="/">Home</a></li>
                     <li><a href="/blog.html">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
                 </ul>
             </div>
         </nav>
     </header>
 
     <main>
-        <section class="blog-posts">
-            <h1>Blog Posts</h1>
-            <div id="posts-container">
-                <!-- Posts will be dynamically loaded here -->
-            </div>
-        </section>
+        {{content}}
     </main>
 
     <footer>
         <p>&copy; 2024 My Blog. All rights reserved.</p>
     </footer>
 
-    <script src="js/main.js"></script>
+    <script src="/js/main.js"></script>
 </body>
 </html> 

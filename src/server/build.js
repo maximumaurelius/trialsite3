@@ -4,10 +4,19 @@ const marked = require('marked');
 
 // Configuration
 const config = {
-    postsDir: 'posts',
-    outputDir: 'dist',
-    templateFile: 'templates/post.html'
+    postsDir: path.join(__dirname, '../content/posts'),
+    outputDir: path.join(__dirname, '../../dist'),
+    templatesDir: path.join(__dirname, '../templates'),
+    clientDir: path.join(__dirname, '../client')
 };
+
+// Helper function to apply base template
+async function applyTemplate(content, title) {
+    const baseTemplate = await fs.readFile(path.join(config.templatesDir, 'base.html'), 'utf-8');
+    return baseTemplate
+        .replace('{{title}}', title)
+        .replace('{{content}}', content);
+}
 
 async function buildSite() {
     try {
@@ -16,10 +25,18 @@ async function buildSite() {
         await fs.ensureDir(path.join(config.outputDir, 'posts'));
         
         // Copy static files
-        await fs.copy('css', path.join(config.outputDir, 'css'));
-        await fs.copy('js', path.join(config.outputDir, 'js'));
-        await fs.copy('index.html', path.join(config.outputDir, 'index.html'));
-        await fs.copy('blog.html', path.join(config.outputDir, 'blog.html'));
+        await fs.copy(path.join(config.clientDir, 'css'), path.join(config.outputDir, 'css'));
+        await fs.copy(path.join(config.clientDir, 'js'), path.join(config.outputDir, 'js'));
+
+        // Build index page
+        const indexContent = await fs.readFile(path.join(config.templatesDir, 'index.html'), 'utf-8');
+        const indexHtml = await applyTemplate(indexContent, 'Home');
+        await fs.writeFile(path.join(config.outputDir, 'index.html'), indexHtml);
+
+        // Build blog page
+        const blogContent = await fs.readFile(path.join(config.templatesDir, 'blog.html'), 'utf-8');
+        const blogHtml = await applyTemplate(blogContent, 'Blog');
+        await fs.writeFile(path.join(config.outputDir, 'blog.html'), blogHtml);
         
         // Process markdown files
         const posts = await processMarkdownFiles();
@@ -72,11 +89,13 @@ function extractTitle(content) {
 }
 
 async function savePostAsHtml(post) {
-    const template = await fs.readFile(config.templateFile, 'utf-8');
-    const html = template
+    const postTemplate = await fs.readFile(path.join(config.templatesDir, 'post.html'), 'utf-8');
+    const postContent = postTemplate
         .replace('{{title}}', post.title)
         .replace('{{content}}', post.content)
         .replace('{{date}}', new Date(post.date).toLocaleDateString());
+    
+    const html = await applyTemplate(postContent, post.title);
     
     await fs.writeFile(
         path.join(config.outputDir, 'posts', `${post.slug}.html`),

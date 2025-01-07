@@ -3,6 +3,11 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Configuration
+const config = {
+    distDir: path.join(__dirname, '../../dist')
+};
+
 // Add logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -29,18 +34,6 @@ const sendFileWithErrorHandling = (res, filePath, errorMessage = 'File not found
     });
 };
 
-// Handle posts/index.json first
-app.get('/posts/index.json', (req, res) => {
-    const filePath = path.join(__dirname, 'dist/posts/index.json');
-    sendFileWithErrorHandling(res, filePath, 'Error loading posts');
-});
-
-// Handle blog posts
-app.get('/posts/:slug.html', (req, res) => {
-    const filePath = path.join(__dirname, 'dist', 'posts', `${req.params.slug}.html`);
-    sendFileWithErrorHandling(res, filePath, 'Post not found');
-});
-
 // Serve static files with proper caching headers
 const staticOptions = {
     etag: true,
@@ -54,18 +47,17 @@ const staticOptions = {
     }
 };
 
-app.use('/css', express.static(path.join(__dirname, 'dist/css'), staticOptions));
-app.use('/js', express.static(path.join(__dirname, 'dist/js'), staticOptions));
+// Handle main routes first
+app.get('/', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'index.html')));
+app.get('/blog.html', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'blog.html')));
 
-// Handle main HTML pages
-const sendHtml = (fileName) => (req, res) => {
-    const filePath = path.join(__dirname, 'dist', fileName);
-    sendFileWithErrorHandling(res, filePath);
-};
+// Handle posts/index.json before the :slug route
+app.get('/posts/index.json', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'posts/index.json'), 'Error loading posts'));
+app.get('/posts/:slug.html', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'posts', `${req.params.slug}.html`), 'Post not found'));
 
-app.get('/', sendHtml('index.html'));
-app.get('/index.html', sendHtml('index.html'));
-app.get('/blog.html', sendHtml('blog.html'));
+// Serve static assets
+app.use('/css', express.static(path.join(config.distDir, 'css'), staticOptions));
+app.use('/js', express.static(path.join(config.distDir, 'js'), staticOptions));
 
 // Handle 404s with a custom 404 page
 app.use((req, res) => {
@@ -112,33 +104,17 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-// Function to find an available port
-const findAvailablePort = (startPort) => {
-    return new Promise((resolve) => {
-        const server = require('net').createServer();
-        server.listen(startPort, () => {
-            const { port } = server.address();
-            server.close(() => resolve(port));
-        });
-        server.on('error', () => {
-            resolve(findAvailablePort(startPort + 1));
-        });
-    });
-};
+// Start server
+const server = app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+    console.log('Static files being served from:', config.distDir);
+});
 
-// Start server with automatic port finding
-findAvailablePort(port).then(availablePort => {
-    const server = app.listen(availablePort, () => {
-        console.log(`Server running at http://localhost:${availablePort}`);
-        console.log('Static files being served from:', path.join(__dirname, 'dist'));
-    });
-
-    // Handle server shutdown gracefully
-    process.on('SIGTERM', () => {
-        console.log('Received SIGTERM. Performing graceful shutdown...');
-        server.close(() => {
-            console.log('Server closed');
-            process.exit(0);
-        });
+// Handle server shutdown gracefully
+process.on('SIGTERM', () => {
+    console.log('Received SIGTERM. Performing graceful shutdown...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
     });
 }); 
