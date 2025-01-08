@@ -50,6 +50,7 @@ const staticOptions = {
 // Handle main routes first
 app.get('/', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'index.html')));
 app.get('/blog.html', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'blog.html')));
+app.get('/about.html', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'about.html')));
 
 // Handle posts/index.json before the :slug route
 app.get('/posts/index.json', (req, res) => sendFileWithErrorHandling(res, path.join(config.distDir, 'posts/index.json'), 'Error loading posts'));

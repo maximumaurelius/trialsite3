@@ -5,6 +5,7 @@ const marked = require('marked');
 // Configuration
 const config = {
     postsDir: path.join(__dirname, '../content/posts'),
+    pagesDir: path.join(__dirname, '../content/pages'),
     outputDir: path.join(__dirname, '../../dist'),
     templatesDir: path.join(__dirname, '../templates'),
     clientDir: path.join(__dirname, '../client')
@@ -38,8 +39,11 @@ async function buildSite() {
         const blogHtml = await applyTemplate(blogContent, 'Blog');
         await fs.writeFile(path.join(config.outputDir, 'blog.html'), blogHtml);
         
-        // Process markdown files
+        // Process markdown files for posts
         const posts = await processMarkdownFiles();
+        
+        // Process markdown files for pages
+        await processPages();
         
         // Update posts index
         await updatePostsIndex(posts);
@@ -48,6 +52,29 @@ async function buildSite() {
     } catch (error) {
         console.error('Build failed:', error);
         process.exit(1);
+    }
+}
+
+async function processPages() {
+    const files = await fs.readdir(config.pagesDir);
+    
+    for (const file of files) {
+        if (path.extname(file) === '.md') {
+            const filePath = path.join(config.pagesDir, file);
+            const content = await fs.readFile(filePath, 'utf-8');
+            const html = marked.parse(content);
+            
+            // Extract page name and title
+            const pageName = path.basename(file, '.md');
+            const title = extractTitle(content);
+            
+            // Apply template and save
+            const pageHtml = await applyTemplate(html, title);
+            await fs.writeFile(
+                path.join(config.outputDir, `${pageName}.html`),
+                pageHtml
+            );
+        }
     }
 }
 
